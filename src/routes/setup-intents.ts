@@ -7,6 +7,7 @@ import {
   getOrCreateCustomer,
   retrievePaymentMethod,
 } from "../services/stripeHelpers";
+import type { ClinicAddress } from "../services/stripeHelpers";
 
 const router = Router();
 
@@ -33,7 +34,7 @@ router.post("/", async (req, res, next) => {
   try {
     const payload = createSetupIntentSchema.parse(req.body);
 
-    const clinicMetadata = buildClinicMetadata(payload.clinicName, payload.clinicAddress, {
+    const clinicMetadata = buildClinicMetadata(payload.clinicName, payload.clinicAddress as ClinicAddress, {
       buyingGroupMember: payload.buyingGroupMember,
       buyingGroupName: payload.buyingGroupName,
       desiredStartDate: payload.desiredStartDate,

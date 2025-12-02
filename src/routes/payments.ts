@@ -17,6 +17,7 @@ import {
   retrievePaymentMethod,
   getOrCreateOneTimeCreditCardFeePrice,
 } from "../services/stripeHelpers";
+import type { ClinicAddress } from "../services/stripeHelpers";
 import { computeOneTimeBreakdown } from "../utils/amounts";
 import { isDateWithinNextTwoMonths } from "../utils/dates";
 
@@ -64,8 +65,7 @@ router.post("/", async (req, res, next) => {
 
     if (!paymentMethodId) {
       return res.status(400).json({
-        error:
-          "Customer does not have a default payment method. Please set up your payment method first.",
+        error: "Customer does not have a default payment method. Please set up your payment method first.",
       });
     }
 
@@ -79,11 +79,9 @@ router.post("/", async (req, res, next) => {
 
     const couponPercent = couponDetails?.percentOff ?? undefined;
     const couponAmountOff =
-      couponDetails?.amountOff && couponDetails.currency === BASE_CURRENCY
-        ? couponDetails.amountOff
-        : undefined;
+      couponDetails?.amountOff && couponDetails.currency === BASE_CURRENCY ? couponDetails.amountOff : undefined;
 
-    const clinicMetadata = buildClinicMetadata(payload.clinicName, payload.clinicAddress, {
+    const clinicMetadata = buildClinicMetadata(payload.clinicName, payload.clinicAddress as ClinicAddress, {
       buyingGroupMember: payload.buyingGroupMember,
       buyingGroupName: payload.buyingGroupName,
       desiredStartDate: payload.desiredStartDate,
@@ -94,9 +92,7 @@ router.post("/", async (req, res, next) => {
     const oneTimePrice = await stripe.prices.retrieve(oneTimeProduct.default_price as string);
 
     if (oneTimePrice.currency !== BASE_CURRENCY) {
-      throw new Error(
-        `Price currency ${oneTimePrice.currency} does not match expected ${BASE_CURRENCY}`,
-      );
+      throw new Error(`Price currency ${oneTimePrice.currency} does not match expected ${BASE_CURRENCY}`);
     }
 
     if (!oneTimePrice.unit_amount) {
@@ -214,9 +210,7 @@ router.post("/", async (req, res, next) => {
     let status = "succeeded";
     if (paidInvoice.payment_intent) {
       const paymentIntentId =
-        typeof paidInvoice.payment_intent === "string"
-          ? paidInvoice.payment_intent
-          : paidInvoice.payment_intent.id;
+        typeof paidInvoice.payment_intent === "string" ? paidInvoice.payment_intent : paidInvoice.payment_intent.id;
       const paymentIntent = await stripe.paymentIntents.retrieve(paymentIntentId);
       status = paymentIntent.status;
     } else if (paidInvoice.status === "paid") {

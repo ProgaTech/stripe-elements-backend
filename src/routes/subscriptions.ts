@@ -19,13 +19,14 @@ import {
   retrievePaymentMethod,
   getOrCreateCreditCardFeePrice,
 } from "../services/stripeHelpers";
+import type { ClinicAddress } from "../services/stripeHelpers";
 import { percentageToAmount } from "../utils/amounts";
 import { isDateWithinNextTwoMonths } from "../utils/dates";
 
 const router = Router();
 
 const clinicAddressSchema = z.object({
-  line1: z.string().min(1),
+  line1: z.string().optional(),
   line2: z.string().optional(),
   city: z.string().min(1),
   state: z.string().optional(),
@@ -67,8 +68,7 @@ router.post("/", async (req, res, next) => {
 
     if (!customer.invoice_settings.default_payment_method) {
       return res.status(400).json({
-        error:
-          "Customer does not have a default payment method. Please set up your payment method first.",
+        error: "Customer does not have a default payment method. Please set up your payment method first.",
       });
     }
 
@@ -106,11 +106,9 @@ router.post("/", async (req, res, next) => {
       discountedPlanAmount = Math.max(planUnitAmount - effectiveCouponAmount, 0);
     }
 
-    const creditCardFeeAmount = creditFunding
-      ? percentageToAmount(discountedPlanAmount, CREDIT_CARD_FEE_PERCENT)
-      : 0;
+    const creditCardFeeAmount = creditFunding ? percentageToAmount(discountedPlanAmount, CREDIT_CARD_FEE_PERCENT) : 0;
 
-    const clinicMetadata = buildClinicMetadata(payload.clinicName, payload.clinicAddress, {
+    const clinicMetadata = buildClinicMetadata(payload.clinicName, payload.clinicAddress as ClinicAddress, {
       buyingGroupMember: payload.buyingGroupMember,
       buyingGroupName: payload.buyingGroupName,
       desiredStartDate: payload.desiredStartDate,

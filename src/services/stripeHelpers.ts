@@ -1,12 +1,7 @@
 import Stripe from "stripe";
 import { stripe } from "../lib/stripe";
 import { inferTimezoneFromAddress } from "../utils/timezone";
-import {
-  getCouponIdForCode,
-  CREDIT_CARD_FEE_PRODUCT_ID,
-  BASE_CURRENCY,
-  CREDIT_CARD_FEE_PERCENT,
-} from "../config";
+import { getCouponIdForCode, CREDIT_CARD_FEE_PRODUCT_ID, BASE_CURRENCY, CREDIT_CARD_FEE_PERCENT } from "../config";
 
 export interface ClinicMetadata {
   clinicName: string;
@@ -19,9 +14,7 @@ export interface ClinicMetadata {
 
 const couponCache = new Map<string, Stripe.Coupon>();
 
-export const retrievePaymentMethod = async (
-  paymentMethodId: string,
-): Promise<Stripe.PaymentMethod> => {
+export const retrievePaymentMethod = async (paymentMethodId: string): Promise<Stripe.PaymentMethod> => {
   return stripe.paymentMethods.retrieve(paymentMethodId);
 };
 
@@ -36,7 +29,7 @@ export const isCreditFunding = (paymentMethod: Stripe.PaymentMethod): boolean =>
 export const getOrCreateCustomer = async (
   email: string,
   clinicMetadata: ClinicMetadata,
-  shipping?: Stripe.CustomerCreateParams.Shipping,
+  shipping?: Stripe.CustomerCreateParams.Shipping
 ): Promise<Stripe.Customer> => {
   const existing = await stripe.customers.list({ email, limit: 1 });
   const metadata: Stripe.MetadataParam = {
@@ -81,7 +74,7 @@ export const findCustomerByEmail = async (email: string): Promise<Stripe.Custome
 
 export const ensureDefaultPaymentMethodSet = async (
   customerId: string,
-  paymentMethod: Stripe.PaymentMethod,
+  paymentMethod: Stripe.PaymentMethod
 ): Promise<void> => {
   if (paymentMethod.customer === customerId) {
     return;
@@ -104,9 +97,7 @@ export interface CouponDetails {
   currency?: string | null;
 }
 
-export const findCouponDetails = async (
-  couponCode?: string | null,
-): Promise<CouponDetails | null> => {
+export const findCouponDetails = async (couponCode?: string | null): Promise<CouponDetails | null> => {
   if (!couponCode) {
     return null;
   }
@@ -138,7 +129,7 @@ export const findCouponDetails = async (
 };
 
 export interface ClinicAddress {
-  line1: string;
+  line1?: string;
   line2?: string;
   city: string;
   state?: string;
@@ -153,7 +144,7 @@ export const buildClinicMetadata = (
     buyingGroupMember: boolean;
     buyingGroupName?: string | null;
     desiredStartDate?: string | null;
-  },
+  }
 ): ClinicMetadata => {
   const timezone = inferTimezoneFromAddress({
     country: address.country,
@@ -181,7 +172,7 @@ export const getOrCreateCreditCardFeePrice = async (
   recurring: {
     interval: Stripe.Price.Recurring.Interval;
     intervalCount?: number;
-  },
+  }
 ): Promise<string> => {
   if (feeAmountCents <= 0) {
     throw new Error("Fee amount must be greater than 0");
@@ -240,9 +231,7 @@ export const getOrCreateCreditCardFeePrice = async (
  * Checks if a price with the same amount already exists for the credit card fee product
  * before creating a new one.
  */
-export const getOrCreateOneTimeCreditCardFeePrice = async (
-  feeAmountCents: number,
-): Promise<string> => {
+export const getOrCreateOneTimeCreditCardFeePrice = async (feeAmountCents: number): Promise<string> => {
   if (feeAmountCents <= 0) {
     throw new Error("Fee amount must be greater than 0");
   }
